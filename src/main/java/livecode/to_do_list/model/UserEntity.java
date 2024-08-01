@@ -23,6 +23,8 @@ public class UserEntity {
 
     private String password;
 
+    private String createAt;
+
     @Enumerated(EnumType.STRING)
     private Roles role;
 

@@ -2,9 +2,7 @@ package livecode.to_do_list.service.implement;
 
 
 import livecode.to_do_list.dto.AuthDto;
-import livecode.to_do_list.exception.InvalidCredentialsException;
-import livecode.to_do_list.exception.InvalidTokenException;
-import livecode.to_do_list.exception.UserAlreadyExistsException;
+import livecode.to_do_list.exception.*;
 import livecode.to_do_list.model.UserEntity;
 import livecode.to_do_list.repository.UserEntityRepository;
 import livecode.to_do_list.security.JwtUtil;
@@ -13,11 +11,13 @@ import livecode.to_do_list.util.response.AuthResponse;
 import livecode.to_do_list.util.response.RegisterResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +48,7 @@ public class AuthServiceImplementation implements AuthService {
         try {
             UserEntity userEntity = userRepository.findByEmail(loginRequest.getEmail());
             if (userEntity == null) {
-                throw new InvalidCredentialsException("Invalid email or password");
+                throw new UnauthorizedException("email not found");
             }
 
             if (passwordEncoder.matches(loginRequest.getPassword(), userEntity.getPassword())) {
@@ -77,7 +77,7 @@ public class AuthServiceImplementation implements AuthService {
 
         List<String> passwordErrors = validatePassword(registerRequest.getPassword());
         if (!passwordErrors.isEmpty()) {
-            throw new IllegalArgumentException("Password does not meet strength requirements: " + String.join(", ", passwordErrors));
+            throw new InvalidCredentialsException("Password does not meet strength requirements: " + String.join(", ", passwordErrors));
         }
 
         UserEntity user = new UserEntity();
@@ -92,7 +92,7 @@ public class AuthServiceImplementation implements AuthService {
                 .password(user.getPassword())
                 .authorities(UserEntity.Roles.USER.name())
                 .build();
-        return new RegisterResponse(user.getId(),user.getUsername(), user.getEmail());
+        return new RegisterResponse(user.getUsername(), user.getEmail());
     }
 
     @Override
@@ -122,7 +122,7 @@ public class AuthServiceImplementation implements AuthService {
         return user;
     }
 
-    private List<String> validatePassword(String password) {
+    public List<String> validatePassword(String password) {
         List<String> errors = new ArrayList<>();
 
         if (password.length() < MIN_PASSWORD_LENGTH) {

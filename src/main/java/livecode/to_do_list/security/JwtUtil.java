@@ -33,6 +33,7 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
+        System.out.println(secret);
         return extractClaim(token, Claims::getSubject);
     }
 

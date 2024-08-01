@@ -27,6 +27,7 @@ public class UserSeviceImpl implements UserEntityService {
             throw new UserAlreadyExistsException("Username is already taken");
         }
         UserEntity user = UserEntity.builder()
+                .createAt(request.getCreateAt())
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .username(request.getUsername())
